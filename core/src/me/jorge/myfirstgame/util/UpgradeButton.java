@@ -132,26 +132,24 @@ public class UpgradeButton extends Button {
     }
 
     private void buyUpgrade() {
-        if (level < maxLevel) {
-            if (cost[level] <= coins) {
-                coins -= cost[level];
-                if (!soundOff) {
-                    buySound.play();
-                }
-                level++;
-                activate();
-
-                if (level == maxLevel) {
-                    downColor = maxColor;
-                    upColor = maxColor;
-                }
-
-                admin.saveData(name, level);
-                admin.saveData("coins", coins);
-                admin.flush();
-                ScreenInputProcessor.coins = coins;
-                return;
+        if (level < maxLevel && cost[level] <= coins) {
+            coins -= cost[level];
+            if (!soundOff) {
+                buySound.play();
             }
+            level++;
+            activate();
+
+            if (level == maxLevel) {
+                downColor = maxColor;
+                upColor = maxColor;
+            }
+
+            admin.saveData(name, level);
+            admin.saveData("coins", coins);
+            admin.flush();
+            ScreenInputProcessor.coins = coins;
+            return;
         }
         shop.unsuccessfulBuy();
         if (!soundOff) {
