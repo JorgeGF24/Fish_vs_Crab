@@ -1,0 +1,41 @@
+{
+  "project_info": {
+    "project_number": "586988447167",
+    "firebase_url": "https://fish-vs-crab.firebaseio.com",
+    "project_id": "fish-vs-crab",
+    "storage_bucket": "fish-vs-crab.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:586988447167:android:59d8c41aeb7e19c5932d0a",
+        "android_client_info": {
+          "package_name": "me.jorge.myfirstgame"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "586988447167-fvt7m3f96utst5pm38oa9levnf2gtamp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATxQbQjSstQPWJRmrgFTO1djyWh7XbVgI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "586988447167-fvt7m3f96utst5pm38oa9levnf2gtamp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-8810945539727773~4294656702"
+    }
+  ],
+  "configuration_version": "1"
+}
