@@ -51,6 +51,6 @@ public class DesktopManager implements manager {
 
     @Override
     public boolean isTimeAutomatic() {
-        return false;
+        return true;
     }
 }

@@ -44,6 +44,8 @@ public class DailyRewardScreen extends ScreenInputProcessor {
     private final static int[] date = myGame.getDate();
     private static Texture tick;
 
+    private boolean isTimeAutomatic;
+
     DailyRewardScreen(MenuScreen menu) {
         System.out.println("Last day redeemed create " + lastDateRedeemed[0] + "" + lastDateRedeemed[1] + "" + lastDateRedeemed[2]);
         System.out.println("days redeemed create " + daysRedeemed);
@@ -62,6 +64,8 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         topButtons = new DailyRewardButton[4];
         botButtons = new DailyRewardButton[3];
         tick = admin.getAsset("tick");
+
+        isTimeAutomatic = MyGame.isTimeAutomatic();
 
         shadeFade.setColor(shadeColor);
         shadeFade.setEndColor(shadeColor);
@@ -194,7 +198,7 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         shapeRenderer.rect(0,0, GAME_WIDTH, GAME_HEIGHT);
 
         shapeRenderer.setColor(BEIGE_CANVAS.r,BEIGE_CANVAS.g,BEIGE_CANVAS.b,alpha);
-        shapeRenderer.rect(SIDE_BORDER, GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2 +ROUNDNESS_RADIUS  , GAME_WIDTH-2* SIDE_BORDER, GAME_HEIGHT-2*(GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2 +ROUNDNESS_RADIUS));
+        shapeRenderer.rect(SIDE_BORDER, GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2 +ROUNDNESS_RADIUS  , GAME_WIDTH-2* SIDE_BORDER, MESSAGE_BOX_HEIGHT- 2*ROUNDNESS_RADIUS);
         shapeRenderer.rect(SIDE_BORDER +ROUNDNESS_RADIUS, GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2, GAME_WIDTH-2*(SIDE_BORDER +ROUNDNESS_RADIUS),ROUNDNESS_RADIUS);
         shapeRenderer.rect(SIDE_BORDER +ROUNDNESS_RADIUS, GAME_HEIGHT/2+ MESSAGE_BOX_HEIGHT /2 -ROUNDNESS_RADIUS, GAME_WIDTH-2*(SIDE_BORDER +ROUNDNESS_RADIUS),ROUNDNESS_RADIUS);
         shapeRenderer.arc(SIDE_BORDER +ROUNDNESS_RADIUS, GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2 +ROUNDNESS_RADIUS,ROUNDNESS_RADIUS,180,90);
@@ -202,13 +206,15 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         shapeRenderer.arc(GAME_WIDTH- SIDE_BORDER -ROUNDNESS_RADIUS, GAME_HEIGHT/2+ MESSAGE_BOX_HEIGHT /2 -ROUNDNESS_RADIUS,ROUNDNESS_RADIUS,0,90);
         shapeRenderer.arc(GAME_WIDTH- SIDE_BORDER -ROUNDNESS_RADIUS, GAME_HEIGHT/2- MESSAGE_BOX_HEIGHT /2 +ROUNDNESS_RADIUS,ROUNDNESS_RADIUS,-90,90);
 
-        for (int i = 0; i < 4; i++) {
-            topButtons[i].setAlpha(alpha);
-            topButtons[i].render(shapeRenderer);
-        }
-        for (int i = 0; i < 3; i++) {
-            botButtons[i].setAlpha(alpha);
-            botButtons[i].render(shapeRenderer);
+        if (isTimeAutomatic) {
+            for (int i = 0; i < 4; i++) {
+                topButtons[i].setAlpha(alpha);
+                topButtons[i].render(shapeRenderer);
+            }
+            for (int i = 0; i < 3; i++) {
+                botButtons[i].setAlpha(alpha);
+                botButtons[i].render(shapeRenderer);
+            }
         }
 
         shapeRenderer.end();
@@ -217,16 +223,18 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         batch.begin();
 
         dayFont.setColor(FONT_COLOR.r, FONT_COLOR.g, FONT_COLOR.b, FONT_COLOR.a*alpha);
-        for (int i = 0; i < 4; i++) {
-            topButtons[i].render();
-            if (i < daysRedeemed) {
-                batch.draw(tick, GAME_WIDTH/2 - TOP_DRAWING_WIDTH/2 + i*TOP_DRAWING_WIDTH/4, GAME_HEIGHT/2 + 10, BUTTON_WIDTH, BUTTON_WIDTH);
+        if (isTimeAutomatic) {
+            for (int i = 0; i < 4; i++) {
+                topButtons[i].render();
+                if (i < daysRedeemed) {
+                    batch.draw(tick, GAME_WIDTH / 2 - TOP_DRAWING_WIDTH / 2 + i * TOP_DRAWING_WIDTH / 4, GAME_HEIGHT / 2 + 10, BUTTON_WIDTH, BUTTON_WIDTH);
+                }
             }
-        }
-        for (int i = 0; i < 3; i++) {
-            botButtons[i].render();
-            if (i+4 < daysRedeemed) {
-                batch.draw(tick, GAME_WIDTH/2 - BOT_DRAWING_WIDTH/2 + i*BOT_DRAWING_WIDTH/3, GAME_HEIGHT/2 - 60, BUTTON_WIDTH, BUTTON_WIDTH);
+            for (int i = 0; i < 3; i++) {
+                botButtons[i].render();
+                if (i + 4 < daysRedeemed) {
+                    batch.draw(tick, GAME_WIDTH / 2 - BOT_DRAWING_WIDTH / 2 + i * BOT_DRAWING_WIDTH / 3, GAME_HEIGHT / 2 - 60, BUTTON_WIDTH, BUTTON_WIDTH);
+                }
             }
         }
 
@@ -234,18 +242,26 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         backFont.setColor(FONT_COLOR.r, FONT_COLOR.g, FONT_COLOR.b, FONT_COLOR.a*alpha);
         titleFont.draw(batch, "Daily reward", GAME_WIDTH / 2 - 85, GAME_HEIGHT/2+97);
         backButton.render(batch);
+
+        if (!isTimeAutomatic) {
+            dayFont.draw(batch, "Set device time to", GAME_WIDTH / 2 - 92, GAME_HEIGHT/2+17);
+            dayFont.draw(batch, "automatic to redeem", GAME_WIDTH / 2 - 100, GAME_HEIGHT/2-5);
+        }
         batch.end();
 
-        Gdx.gl.glEnable(GL_BLEND);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(shadeColor);
-        for (int i = 0; i < 3; i++) {
-            topButtons[i].renderShade(shapeRenderer);
-            botButtons[i].renderShade(shapeRenderer);
+        if (isTimeAutomatic) {
+            Gdx.gl.glEnable(GL_BLEND);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(shadeColor);
+            for (int i = 0; i < 3; i++) {
+                topButtons[i].renderShade(shapeRenderer);
+                botButtons[i].renderShade(shapeRenderer);
+            }
+            topButtons[3].renderShade(shapeRenderer);
+
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL_BLEND);
         }
-        topButtons[3].renderShade(shapeRenderer);
-        shapeRenderer.end();
-        Gdx.gl.glDisable(GL_BLEND);
     }
 
     @Override
@@ -311,14 +327,16 @@ public class DailyRewardScreen extends ScreenInputProcessor {
 
     @Override
     public void touchDown(float x, float y) {
-        for (int i = 0; i < 4; i++) {
-            if (topButtons[i].checkIfTouched(x,y)) {
-                return;
+        if (isTimeAutomatic) {
+            for (int i = 0; i < 4; i++) {
+                if (topButtons[i].checkIfTouched(x, y)) {
+                    return;
+                }
             }
-        }
-        for (int i = 0; i < 3; i++) {
-            if (botButtons[i].checkIfTouched(x,y)) {
-                return;
+            for (int i = 0; i < 3; i++) {
+                if (botButtons[i].checkIfTouched(x, y)) {
+                    return;
+                }
             }
         }
         backButton.checkIfTouched(x,y);

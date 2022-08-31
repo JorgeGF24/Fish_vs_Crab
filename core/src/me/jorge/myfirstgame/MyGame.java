@@ -137,8 +137,7 @@ public class MyGame extends Game {
 	}
 
 	public static boolean isTimeAutomatic() {
-		return true;
-		//return manager.isTimeAutomatic();
+		return manager.isTimeAutomatic();
 	}
 
 	public int[] getDate() {
