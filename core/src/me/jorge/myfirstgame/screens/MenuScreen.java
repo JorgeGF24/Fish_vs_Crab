@@ -62,7 +62,8 @@ public class MenuScreen extends ScreenInputProcessor {
 
 
     private final static float BACKGROUND_SPEED = 30;
-    private final float climbSpeed =10;
+    private final float CLIMB_CONSTANT =10;
+    private float climbSpeed;
     private float scoreXDisplacement;
     private final float INITIAL_CLIMB_SPEED = 235;
     private final float CLOUD_HEIGHT = Background.CLOUD_HEIGHT, CLOUD_WIDTH = Background.CLOUD_WIDTH,
@@ -72,8 +73,9 @@ public class MenuScreen extends ScreenInputProcessor {
 
     private int highscore, highscore2, highscore3;
 
-    private boolean isStarting, goingToShop, comingFromShop, goingToRanking, comingFromRanking, tutotialOn;
-    private final boolean legalDailyReward;
+    private int state;
+    //private boolean isStarting  1, goingToShop  2, comingFromShop  -2, goingToRanking  3, comingFromRanking  -3,
+    private boolean tutotialOn;
 
     //private Button shopButton;
 
@@ -81,7 +83,7 @@ public class MenuScreen extends ScreenInputProcessor {
     private float timerDisplacement, testFloat = 0;
     private final Texture[] heartTextures;
     private final BitmapFont timerFont;
-    private long heartTimer, lastHeartTime = System.currentTimeMillis();
+    private long heartTimer, lastHeartTime;
     private final long HEART_TIMER_MIN = 30, HEART_TIMER = HEART_TIMER_MIN * 60 * 1000;
     private String timerToPrint;
     private int minutesToPrint, secondsToPrint;
@@ -109,7 +111,6 @@ public class MenuScreen extends ScreenInputProcessor {
             admin.saveData("lasthearttime", lastHeartTime);
             admin.flush();
         }
-
 
         fadeInTime = fromLoading?1.5f:0.3f;
         final int i = fromLoading?1:0;
@@ -140,7 +141,6 @@ public class MenuScreen extends ScreenInputProcessor {
         timerFont = admin.getAsset("AcariItalic9");
         timerFont.setColor(0,0,0,1);
 
-        legalDailyReward = MyGame.isTimeAutomatic();
         timerDisplacement = Math.max((Math.round(hearts/2.1f))*20, 0);
 
         soundButton = new Button(GAME_WIDTH - 54, GAME_HEIGHT - 49, 33, (Texture) admin.getAsset("volumeOn"), (Texture) admin.getAsset("volumeOff"));
@@ -259,10 +259,13 @@ public class MenuScreen extends ScreenInputProcessor {
 
         if (MyGame.isTimeAutomatic()) {
             heartTimer=System.currentTimeMillis()-lastHeartTime;
+            final boolean SAVE = hearts < 10 && heartTimer > HEART_TIMER;
             while (hearts < 10 && heartTimer > HEART_TIMER) {
                 lastHeartTime += HEART_TIMER;
                 hearts++;
                 timerDisplacement = Math.max((Math.round(hearts/2.1f))*20, 0);
+            }
+            if (SAVE) {
                 admin.saveData("lasthearttime", lastHeartTime);
                 admin.saveData("hearts", hearts);
                 admin.flush();
@@ -271,7 +274,7 @@ public class MenuScreen extends ScreenInputProcessor {
     }
 
     void comeFromShop() {
-        comingFromShop = true;
+        state = -2;
         shop.transition();
         sea.changeFrontAlpha(0.8f);
         leftWall.setY(0);
@@ -285,7 +288,7 @@ public class MenuScreen extends ScreenInputProcessor {
     }
 
     void comeFromRanking() {
-        comingFromRanking = true;
+        state = -3;
         rankingScreen.transition();
 
         fontFade.restart();
@@ -298,96 +301,105 @@ public class MenuScreen extends ScreenInputProcessor {
     @Override
     public void render(float delta) {
         if (delta > 0.02f) delta = 0.02f;
-        if (comingFromShop) {
-            transitionTimer += delta;
-            seaY -= climbSpeed*delta*(seaY-GAME_HEIGHT/2 + SEA_HEIGHT + 15)*transitionTimer/2;
-            sea.setY(seaY);
-            player.addToY(-climbSpeed*delta*(seaY-GAME_HEIGHT/2 + SEA_HEIGHT + 15)*transitionTimer/2);
-            player.setSeaLevel(seaY + SEA_HEIGHT);
+        switch(state) {
+            case -2:  // coming from shop
+                transitionTimer += delta;
+                climbSpeed = CLIMB_CONSTANT*(seaY-GAME_HEIGHT/2 + SEA_HEIGHT + 15)*transitionTimer/2;
+                seaY -= delta*climbSpeed;
+                sea.setY(seaY);
+                player.addToY(-delta*climbSpeed);
+                player.setSeaLevel(seaY + SEA_HEIGHT);
 
-            Wall.speed = -climbSpeed * (seaY-GAME_HEIGHT/2 + SEA_HEIGHT + 15) * transitionTimer/2;
+                Wall.speed = -climbSpeed;
 
-            shop.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
+                shop.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
 
-            leftWall.update(delta);
-            rightWall.update(delta);
+                leftWall.update(delta);
+                rightWall.update(delta);
 
-            if (transitionTimer > 2) {
-                comingFromShop = false;
-                transitionTimer = 0;
-            }
-
-        } else if (goingToShop) {
-            transitionTimer += delta;
-            seaY += climbSpeed*delta*(3*GAME_HEIGHT/2 - SEA_HEIGHT - 15 -seaY)*transitionTimer/2;
-            sea.setY(seaY);
-            player.addToY(climbSpeed*delta*(GAME_HEIGHT + GAME_HEIGHT/2 - SEA_HEIGHT - 15-seaY)*transitionTimer/2);
-            player.setSeaLevel(seaY + SEA_HEIGHT);
-
-            Wall.speed = climbSpeed * (3*GAME_HEIGHT/2 - SEA_HEIGHT - 15 -seaY) * transitionTimer/2;
-
-            shop.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
-
-            leftWall.update(delta);
-            rightWall.update(delta);
-
-            if (transitionTimer > 2) {
-                goToShop();
-                if (!goingToShop) {
-                    return;
+                if (transitionTimer > 2) {
+                    state = 0;
+                    transitionTimer = 0;
                 }
-            }
-        } else if (comingFromRanking) {
-            transitionTimer += delta;
-            seaY += climbSpeed*delta*(GAME_HEIGHT/2 - SEA_HEIGHT - 15 - seaY)*transitionTimer/2;
-            sea.setY(seaY);
-            player.addToY(climbSpeed*delta*(GAME_HEIGHT/2 - SEA_HEIGHT - 15 - seaY)*transitionTimer/2);
-            player.setSeaLevel(seaY + SEA_HEIGHT);
+                break;
 
-            if (seaY > -SEA_HEIGHT) {
-                backgroundY += 0.5f*climbSpeed * delta * (DEFAULT_BACKGROUND_Y - backgroundY + 20) * transitionTimer;
-            }
+            case 2:  // Going to shop
+                transitionTimer += delta;
+                climbSpeed = CLIMB_CONSTANT*(3*GAME_HEIGHT/2 - SEA_HEIGHT - 15 -seaY)*transitionTimer/2;
+                seaY += delta*climbSpeed;
+                sea.setY(seaY);
+                player.addToY(delta*climbSpeed);
+                player.setSeaLevel(seaY + SEA_HEIGHT);
 
-            Wall.speed = climbSpeed * (GAME_HEIGHT/2 - SEA_HEIGHT - 15 - seaY) * transitionTimer/2;
-            scoreXDisplacement += 4*delta*(0 - scoreXDisplacement)*transitionTimer;
+                Wall.speed = climbSpeed;
 
-            rankingScreen.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
+                shop.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
 
-            leftWall.update(delta);
-            rightWall.update(delta);
+                leftWall.update(delta);
+                rightWall.update(delta);
 
-            if (transitionTimer > 2) {
-                comingFromRanking = false;
-                leftWall.setY(leftWall.getY() - GAME_HEIGHT);
-                rightWall.setY(rightWall.getY() - GAME_HEIGHT);
-                transitionTimer = 0;
-            }
-        } else if (goingToRanking) {
-            transitionTimer += delta;
-            seaY += climbSpeed*delta*(-SEA_HEIGHT - 15 - seaY - GAME_HEIGHT/2)*transitionTimer/2;
-            sea.setY(seaY);
-            player.addToY(climbSpeed*delta*(-SEA_HEIGHT - 15 - seaY - GAME_HEIGHT/2)*transitionTimer/2);
-            player.setSeaLevel(seaY + SEA_HEIGHT);
-
-            Wall.speed = climbSpeed * (-SEA_HEIGHT - 15 - seaY - GAME_HEIGHT/2) * transitionTimer/2;
-
-            rankingScreen.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
-
-            backgroundY -= 3*climbSpeed*delta*(backgroundY+30)*transitionTimer;
-
-            scoreXDisplacement += 3*delta*(-75 - scoreXDisplacement)*transitionTimer;
-
-            leftWall.update(delta);
-            rightWall.update(delta);
-
-            if (transitionTimer > 2) {
-                goToRanking();
-                if (!goingToRanking) {
-                    return;
+                if (transitionTimer > 2) {
+                    goToShop();
+                    if (state != 2) {
+                        return;
+                    }
                 }
-            }
+                break;
+            case -3:   // Coming from ranking
+                transitionTimer += delta;
+                climbSpeed = CLIMB_CONSTANT*(GAME_HEIGHT/2 - SEA_HEIGHT - 15 - seaY)*transitionTimer/2;
+                seaY += climbSpeed *delta;
+                sea.setY(seaY);
+                player.addToY(climbSpeed*delta);
+                player.setSeaLevel(seaY + SEA_HEIGHT);
+
+                if (seaY > -SEA_HEIGHT) {
+                    backgroundY += 0.5f* CLIMB_CONSTANT * delta * (DEFAULT_BACKGROUND_Y - backgroundY + 20) * transitionTimer;
+                }
+
+                Wall.speed = climbSpeed;
+                scoreXDisplacement += 4*delta*(0 - scoreXDisplacement)*transitionTimer;
+
+                rankingScreen.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
+
+                leftWall.update(delta);
+                rightWall.update(delta);
+
+                if (transitionTimer > 2) {
+                    state = 0;
+                    leftWall.setY(leftWall.getY() - GAME_HEIGHT);
+                    rightWall.setY(rightWall.getY() - GAME_HEIGHT);
+                    transitionTimer = 0;
+                }
+                break;
+            case 3:   // Going to ranking
+                transitionTimer += delta;
+                climbSpeed = CLIMB_CONSTANT*(-SEA_HEIGHT - 15 - seaY - GAME_HEIGHT/2)*transitionTimer/2;
+                seaY += delta*climbSpeed;
+                sea.setY(seaY);
+                player.addToY(delta*climbSpeed);
+                player.setSeaLevel(seaY + SEA_HEIGHT);
+
+                Wall.speed = climbSpeed;
+
+                rankingScreen.setYDisplacement(seaY - GAME_HEIGHT/2 + SEA_HEIGHT + 15);
+
+                backgroundY -= 3* CLIMB_CONSTANT *delta*(backgroundY+30)*transitionTimer;
+
+                scoreXDisplacement += 3*delta*(-75 - scoreXDisplacement)*transitionTimer;
+
+                leftWall.update(delta);
+                rightWall.update(delta);
+
+                if (transitionTimer > 2) {
+                    goToRanking();
+                    if (state != 3) {
+                        return;
+                    }
+                }
+                break;
         }
-        if (!isStarting) {
+        if (state != 1) {
             switch (flashStage) {
                 case 1:
                     if (flashAlpha > 0.8f) {
@@ -439,15 +451,15 @@ public class MenuScreen extends ScreenInputProcessor {
             } else {
                 climbSpeed = INITIAL_CLIMB_SPEED;
             }*/
-            seaY -= climbSpeed*delta*(seaY-30)*transitionTimer;
+            seaY -= CLIMB_CONSTANT *delta*(seaY-30)*transitionTimer;
             sea.setY(seaY);
 
-            Wall.speed = -climbSpeed * (seaY-30) * transitionTimer;
+            Wall.speed = -CLIMB_CONSTANT * (seaY-30) * transitionTimer;
 
             leftWall.update(delta);
             rightWall.update(delta);
 
-            backgroundY -= climbSpeed*delta*(backgroundY-20)*transitionTimer;
+            backgroundY -= CLIMB_CONSTANT *delta*(backgroundY-20)*transitionTimer;
             if (transitionTimer > 1) {
                 if (gamemodeHard) {
                     gameScreen.setToHardcore();
@@ -468,7 +480,6 @@ public class MenuScreen extends ScreenInputProcessor {
             }
 
             player.update(delta);
-
         }
 
 
@@ -508,7 +519,7 @@ public class MenuScreen extends ScreenInputProcessor {
         shapeRenderer.end();
 
         batch.begin();
-        if (goingToShop || comingFromRanking) {
+        if (state == 2 || state == -3) {
             leftWall.drawUp(batch);
             rightWall.drawUp(batch);
         } else {
@@ -523,7 +534,7 @@ public class MenuScreen extends ScreenInputProcessor {
 
         batch.end();
 
-        if (goingToRanking || comingFromRanking) {
+        if (state*state == 9) { // any of the ranking states
             rankingScreen.render(delta);
         }
 
@@ -531,7 +542,7 @@ public class MenuScreen extends ScreenInputProcessor {
         Gdx.gl.glEnable(GL_BLEND);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        if (!(isStarting || goingToShop || comingFromShop)) {
+        if (!(state == 1 || state*state == 4)) {
             shapeRenderer.setColor(0, 0.27f, 0.74f, 0.8f);
         } else {
             shapeRenderer.setColor(0, 0.27f, 0.74f, 0.8f+0.2f*(1-fontColor.a));
@@ -568,9 +579,7 @@ public class MenuScreen extends ScreenInputProcessor {
             arrow.setAlpha(fontColor.a);
             sea.changeFrontAlpha(0.8f+0.2f*(1-fontColor.a));
             rankingButton.setAlpha(fontColor.a);
-            if (legalDailyReward) {
-                dailyRewardButton.setAlpha(fontColor.a);
-            }
+            dailyRewardButton.setAlpha(fontColor.a);
             if (hardUnlocked) {
                 gamemodeButton.setAlpha(fontColor.a);
             }
@@ -592,9 +601,7 @@ public class MenuScreen extends ScreenInputProcessor {
             arrow.draw(batch);
             soundButton.render(batch);
             rankingButton.render(batch);
-            if (legalDailyReward) {
-                dailyRewardButton.render(batch);
-            }
+            dailyRewardButton.render(batch);
             if (hardUnlocked) {
                 gamemodeButton.render(batch);
             }
@@ -609,7 +616,7 @@ public class MenuScreen extends ScreenInputProcessor {
             drawHearts();
         }
 
-        if (goingToShop || comingFromShop) {
+        if (state*state == 4) {
             shop.render(delta);
         }
         if (flashStage>0) {
@@ -637,7 +644,7 @@ public class MenuScreen extends ScreenInputProcessor {
 
     private void drawHearts() {
 
-        if (goingToRanking || goingToShop || comingFromRanking || comingFromShop) {
+        if (state*state > 1) {
             return;
         }
 
@@ -727,43 +734,39 @@ public class MenuScreen extends ScreenInputProcessor {
     }
 
     private void goToRanking() {
-        if (!(isStarting || comingFromShop || comingFromRanking || goingToShop)) {
-            if (goingToRanking) {
-                myGame.setScreen(rankingScreen);
-                goingToRanking = false;
-                transitionTimer = 0;
-            } else {
-                if (rankingScreen == null) {
-                    rankingScreen = new RankingScreen(this, background, rightWall, leftWall);
-                }
-                goingToRanking = true;
-                fontFade.restart();
-                fontFade.setDuration(0.2f);
-                fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
-                fontFading = true;
-                rankingScreen.transition();
+        if (state == 3) {
+            myGame.setScreen(rankingScreen);
+            state = 0;
+            transitionTimer = 0;
+        } else {
+            if (rankingScreen == null) {
+                rankingScreen = new RankingScreen(this, background, rightWall, leftWall);
             }
+            state = 3;
+            fontFade.restart();
+            fontFade.setDuration(0.2f);
+            fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
+            fontFading = true;
+            rankingScreen.transition();
         }
     }
 
     private void goToShop() {
-        if (!(isStarting || comingFromShop || goingToRanking || comingFromRanking)) {
-            if (goingToShop) {
-                myGame.setScreen(shop);
-                goingToShop = false;
-                transitionTimer = 0;
-            } else {
-                if (shop == null) {
-                    shop = new UpgradesScreen(this);
-                }
-                goingToShop = true;
-                sea.changeFrontAlpha(1);
-                fontFade.restart();
-                fontFade.setDuration(0.2f);
-                fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
-                fontFading = true;
-                shop.transition();
+        if (state == 2) {
+            myGame.setScreen(shop);
+            state = 0;
+            transitionTimer = 0;
+        } else {
+            if (shop == null) {
+                shop = new UpgradesScreen(this);
             }
+            state = 2;
+            sea.changeFrontAlpha(1);
+            fontFade.restart();
+            fontFade.setDuration(0.2f);
+            fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
+            fontFading = true;
+            shop.transition();
         }
     }
 
@@ -847,13 +850,11 @@ public class MenuScreen extends ScreenInputProcessor {
 
     @Override
     public void touchDown(float x, float y) {
-        if (tutotialOn) {
+        if (tutotialOn || state != 0) {
             return;
         }
         rankingButton.checkIfTouched(x, y);
-        if (legalDailyReward) {
-            dailyRewardButton.checkIfTouched(x, y);
-        }
+        dailyRewardButton.checkIfTouched(x, y);
         if (hardUnlocked) {
             gamemodeButton.checkIfTouched(x, y);
         }
@@ -861,12 +862,10 @@ public class MenuScreen extends ScreenInputProcessor {
 
     @Override
     public void touchUp(float x, float y) {
-        if (!(isStarting || goingToShop || comingFromShop || goingToRanking || comingFromRanking || tutotialOn)) {
+        if (state == 0 &! tutotialOn) {
             soundButton.checkIfReleased(x, y);
             rankingButton.checkIfReleased(x, y);
-            if (legalDailyReward) {
-                dailyRewardButton.checkIfReleased(x, y);
-            }
+            dailyRewardButton.checkIfReleased(x, y);
             if (hardUnlocked) {
                 gamemodeButton.checkIfReleased(x, y);
             }
@@ -876,7 +875,7 @@ public class MenuScreen extends ScreenInputProcessor {
     @Override
     public void tap(float x, float y) {
         if (tutotialOn) {
-            if (!isStarting) {
+            if (state != 1) {
                 start();
             } else {
                 player.jump();
@@ -889,12 +888,7 @@ public class MenuScreen extends ScreenInputProcessor {
             if (shop != null) {
                 shop.changeSoundOff();
             }
-        } else if (legalDailyReward) {
-            if (!dailyRewardButton.checkIfTouched(x,y) && isStarting) {
-                player.jump();
-            }
-        } else if (!rankingButton.checkIfTouched(x,y) &&
-                    !(isStarting || goingToShop || comingFromShop || goingToRanking || comingFromRanking)) {
+        } else if (!(rankingButton.checkIfTouched(x,y) || dailyRewardButton.checkIfTouched(x,y)) && state == 0) {
             if (hardUnlocked) {
                 if (!gamemodeButton.checkIfTouched(x,y)) {
                     if (y > ARROW_Y_CAP + 70) {
@@ -910,13 +904,13 @@ public class MenuScreen extends ScreenInputProcessor {
                     goToShop();
                 }
             }
-        } else if (isStarting) {
+        } else if (state == 1) {
             player.jump();
         }
     }
 
     void start() {
-        isStarting = true;
+        state = 1;
         fontFade.restart();
         fontFade.setDuration(0.2f);
         fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
@@ -936,7 +930,7 @@ public class MenuScreen extends ScreenInputProcessor {
 
     @Override
     public void flingUp(float startX, float startY) {
-        if (startY < GAME_HEIGHT/2 && !(isStarting || goingToShop || goingToRanking || tutotialOn)) {
+        if (startY < GAME_HEIGHT/2 && !( state>0 || tutotialOn)) {
             goToShop();
         }
     }
