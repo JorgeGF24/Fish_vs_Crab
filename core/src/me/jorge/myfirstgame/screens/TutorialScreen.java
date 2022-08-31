@@ -179,7 +179,7 @@ public class TutorialScreen extends ScreenInputProcessor implements SpriteHandle
                 gameScreen.createTube(true).setSpriteHandlerScreen(this);
                 gameScreen.createTube(false).setSpriteHandlerScreen(this);
             }
-        } else if (state == 3 || state == 4) {
+        } else if (state > 2) { // state is 3 or 4
             leftSpawnClock += climbSpeed * delta;
             rightSpawnClock += climbSpeed * delta;
             if (leftSpawnClock < 0) {
@@ -271,7 +271,7 @@ public class TutorialScreen extends ScreenInputProcessor implements SpriteHandle
 
         batch.begin();
         batch.draw(cloud, (GAME_WIDTH - 154) / 2, GAME_HEIGHT / 2 - 67 + 30, 154, 35);
-        batch.draw(cloud2, (GAME_WIDTH) / 2 - 67 / 0.8f, GAME_HEIGHT / 2 - 67 / 1.5f + 30, 154f / 3, 35 / 2);
+        batch.draw(cloud2, (GAME_WIDTH) / 2 - 67 / 0.8f, GAME_HEIGHT / 2 - 67 / 1.5f + 30, 154f / 3, 35f / 2);
         batch.draw(landscape, 0, 50, GAME_WIDTH, 100);
         if (state > 3) {
             if (displayScore < 10) {
@@ -600,6 +600,15 @@ public class TutorialScreen extends ScreenInputProcessor implements SpriteHandle
         }
     }
 
+    // Fades out of game when dead at end
+    public void fadeOut() {
+        fadingOut = true;
+        fade.setColor(fadingColor);
+        fade.setEndColor(new Color(fadingColor.r,fadingColor.g,fadingColor.b,1));
+        fade.setDuration(2.5f);
+    }
+
+    // Fades into shop
     public void finishedFadeOut() {
         fadeInShop1 = true;
         fade.reset();
@@ -610,8 +619,12 @@ public class TutorialScreen extends ScreenInputProcessor implements SpriteHandle
         shop = new UpgradesScreen(menu);
         menu.setShop(shop);
         shop.setTutorialOn();
+        admin.saveData("tutorialDone",1);
+        admin.saveData("coins",coins);
+        admin.flush();
     }
 
+    // Fades out of semitransparent screen
     public void startFade2() {
         fadeInShop2 = true;
         fade.reset();
@@ -620,10 +633,4 @@ public class TutorialScreen extends ScreenInputProcessor implements SpriteHandle
         fade.setDuration(0.25f);
     }
 
-    public void fadeOut() {
-        fadingOut = true;
-        fade.setColor(fadingColor);
-        fade.setEndColor(new Color(fadingColor.r,fadingColor.g,fadingColor.b,1));
-        fade.setDuration(2.5f);
-    }
 }
