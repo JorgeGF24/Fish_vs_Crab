@@ -60,7 +60,7 @@ public class LoadingScreen extends ScreenInputProcessor  {
         System.out.println("username is " + admin.getString("userName"));
 
         MenuScreen.gamemodeHard = (admin.getData("gamemodeHard")==1);
-        MenuScreen.hardUnlocked = (admin.getData("Hardcore mode") == 0);
+        MenuScreen.hardUnlocked = (admin.getData("Hardcore mode") == 1);
 
         final int highscore = admin.getData("highscore");
         game.newHighscore(highscore);
@@ -100,8 +100,8 @@ public class LoadingScreen extends ScreenInputProcessor  {
             soundOff = (1==admin.getData("soundOff"));
             Button.soundOff = soundOff;
             Button.clickSound = admin.getAsset("button sound");
-            final MenuScreen menu = new MenuScreen(true);
-            if (admin.getData("tutorialDone") != 0) {
+            final MenuScreen menu = new MenuScreen(true); //TODO
+            if (admin.getData("tutorialDone") == 0) {
                 menu.setTutotialOn(true);
             }
             if (admin.getString("userName").equals("") || admin.getString("userName") == null) {
