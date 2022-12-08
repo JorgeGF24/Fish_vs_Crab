@@ -71,17 +71,24 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         shadeFade.setEndColor(shadeColor);
 
         boolean redemable = false;
-        if (date[2] != 0 && date[2] == lastDateRedeemed[2]) {
-            if (date[1] == lastDateRedeemed[1]) {
-                if (date[0] - lastDateRedeemed[0] == 1) {
-                    redemable = true;
-                }
-            } else if (date[1] - lastDateRedeemed[1] == 1) {
-                int[] DAYS_IN_MONTH = new int[]{31, (date[2] % 4 == 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-                if (date[0] == 1 && lastDateRedeemed[0] == DAYS_IN_MONTH[lastDateRedeemed[1]]) {
-                    redemable = true;
+        try {
+            lastDateRedeemed = (admin.getString("lastdateredeemed").equals("") ? new int[]{0, 0, 0} : new int[]{Integer.parseInt(admin.getString("lastdateredeemed").substring(0, 2)),
+                    Integer.parseInt(admin.getString("lastdateredeemed").substring(2, 4)),
+                    Integer.parseInt(admin.getString("lastdateredeemed").substring(4, 8))});
+            if (date[2] != 0 && date[2] == lastDateRedeemed[2]) {
+                if (date[1] == lastDateRedeemed[1]) {
+                    if (date[0] - lastDateRedeemed[0] == 1) {
+                        redemable = true;
+                    }
+                } else if (date[1] - lastDateRedeemed[1] == 1) {
+                    int[] DAYS_IN_MONTH = new int[]{31, (date[2] % 4 == 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+                    if (date[0] == 1 && lastDateRedeemed[0] == DAYS_IN_MONTH[lastDateRedeemed[1]]) {
+                        redemable = true;
+                    }
                 }
             }
+        } catch (Exception e) {
+
         }
 
         System.out.println("redeemableeee " + redemable);
@@ -89,9 +96,9 @@ public class DailyRewardScreen extends ScreenInputProcessor {
         if (redemable) {
             menu.dailyRewardIsAvailable();
         } else if (!Arrays.equals(lastDateRedeemed, date)) {
-                daysRedeemed = 0;
-                admin.saveData("daysredeemed", 0);
-                admin.flush();
+            daysRedeemed = 0;
+            admin.saveData("daysredeemed", 0);
+            admin.flush();
         }
 
         topButtons[0] = new DailyRewardButton(GAME_WIDTH/2 - TOP_DRAWING_WIDTH/2, GAME_HEIGHT/2 + 10, 1,
