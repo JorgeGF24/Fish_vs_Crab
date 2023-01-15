@@ -51,6 +51,7 @@ public class AndroidLauncher extends AndroidApplication {
 	private int[] topScores, hardTopScores;
 
 	private MyGame game;
+	private AndroidManager manager;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -64,16 +65,18 @@ public class AndroidLauncher extends AndroidApplication {
 		MobileAds.initialize(this, new OnInitializationCompleteListener() {
 			@Override
 			public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
+				Log.d("AD", String.valueOf(initializationStatus));
+				loadInterstitialAd();
+				loadRewardAd();
 			}
 		});
 
 		// TEST ca-app-pub-3940256099942544/8691691433
 		// REAL ca-app-pub-8810945539727773/8819793873
 
-		loadInterstitialAd();
-		loadRewardAd();
 
-		game = new MyGame(new AndroidManager(mInterstitialAd, mRewardedAd, this));
+		manager = new AndroidManager(mInterstitialAd, mRewardedAd, this);
+		game = new MyGame(manager);
 		initialize(game, config);
 	}
 
@@ -92,15 +95,18 @@ public class AndroidLauncher extends AndroidApplication {
 				@Override
 				public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
 					// Handle the error.
+					Log.d("AD", "FAILED TO LOAD");
 					Log.d("AD", loadAdError.toString());
 					loadRewardAd();
 					game.onRewardedVideoFailed();
 					mRewardedAd = null;
+					manager.setRewardAd(null);
 				}
 
 				@Override
 				public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
 					mRewardedAd = rewardedAd;
+					manager.setRewardAd(mRewardedAd);
 					ScreenInputProcessor.adLoaded = true;
 					Log.d("AD", "Ad was loaded.");
 				}
@@ -116,6 +122,7 @@ public class AndroidLauncher extends AndroidApplication {
 					// The mInterstitialAd reference will be null until
 					// an ad is loaded.
 					mInterstitialAd = interstitialAd;
+					manager.setInterstitialAd(mInterstitialAd);
 					Log.i("AD", "onAdLoaded");
 				}
 
@@ -124,6 +131,7 @@ public class AndroidLauncher extends AndroidApplication {
 					// Handle the error
 					Log.d("AD", loadAdError.toString());
 					mInterstitialAd = null;
+					manager.setInterstitialAd(null);
 				}
 			}
 		);

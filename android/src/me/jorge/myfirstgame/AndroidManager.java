@@ -129,41 +129,41 @@ public class AndroidManager implements manager {
                     @Override
                     public void onAdClicked() {
                         // Called when a click is recorded for an ad.
-                        //Log.d(TAG, "Ad was clicked.");
+                        Log.d("inter AD", "Ad was clicked.");
                     }
 
                     @Override
                     public void onAdDismissedFullScreenContent() {
                         // Called when ad is dismissed.
                         // Set the ad reference to null so you don't show the ad a second time.
-                        //Log.d(TAG, "Ad dismissed fullscreen content.");
+                        Log.d("inter AD", "Ad dismissed fullscreen content.");
                         interstitialAd = null;
                     }
 
                     @Override
                     public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                         // Called when ad fails to show.
-                        //Log.e(TAG, "Ad failed to show fullscreen content.");
+                        Log.e("inter AD", "Ad failed to show fullscreen content.");
                         interstitialAd = null;
                     }
 
                     @Override
                     public void onAdImpression() {
                         // Called when an impression is recorded for an ad.
-                        //Log.d(TAG, "Ad recorded an impression.");
+                        Log.d("inter AD", "Ad recorded an impression.");
                     }
 
                     @Override
                     public void onAdShowedFullScreenContent() {
                         // Called when ad is shown.
-                        //Log.d(TAG, "Ad showed fullscreen content.");
+                        Log.d("inter AD", "Ad showed fullscreen content.");
                     }
                 });
 
                 interstitialAd.show(launcher);
             } else {
                 loadInterstitialAd();
-                Log.d("AD", "The interstitial ad wasn't ready yet.");
+                Log.d("inter AD", "The interstitial ad wasn't ready yet.");
             }
         });
     }
@@ -189,5 +189,13 @@ public class AndroidManager implements manager {
     @Override
     public boolean isTimeAutomatic() {
         return (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME, 0)) == 1 && (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1);
+    }
+
+    public void setInterstitialAd(InterstitialAd interstitialAd) {
+        this.interstitialAd = interstitialAd;
+    }
+
+    public void setRewardAd(RewardedAd rewardAd) {
+        this.rewardAd = rewardAd;
     }
 }
