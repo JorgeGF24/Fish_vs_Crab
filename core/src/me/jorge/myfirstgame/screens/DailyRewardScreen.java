@@ -44,7 +44,7 @@ public class DailyRewardScreen extends ScreenInputProcessor {
     private final static int[] date = myGame.getDate();
     private static Texture tick;
 
-    private boolean isTimeAutomatic;
+    private final boolean isTimeAutomatic;
 
     DailyRewardScreen(MenuScreen menu) {
         System.out.println("Last day redeemed create " + lastDateRedeemed[0] + "" + lastDateRedeemed[1] + "" + lastDateRedeemed[2]);
@@ -95,6 +95,11 @@ public class DailyRewardScreen extends ScreenInputProcessor {
 
         if (redemable) {
             menu.dailyRewardIsAvailable();
+            if (daysRedeemed == 7) {
+                daysRedeemed = 0;
+                admin.saveData("daysredeemed", 0);
+                admin.flush();
+            }
         } else if (!Arrays.equals(lastDateRedeemed, date)) {
             daysRedeemed = 0;
             admin.saveData("daysredeemed", 0);
