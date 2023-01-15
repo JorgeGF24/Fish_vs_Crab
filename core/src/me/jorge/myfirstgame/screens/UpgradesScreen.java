@@ -212,7 +212,7 @@ public class UpgradesScreen extends ScreenInputProcessor {
     }
 
     void goToAdScreen() {
-        myGame.setScreen(new RewardedVideoScreen(this, "   Play an ad to\n   get 100 coins!", 100));
+        myGame.setScreen(new RewardedVideoScreen(this, "   Play an ad to\n   get 100 coins!", 100, 1));
     }
 
     @Override

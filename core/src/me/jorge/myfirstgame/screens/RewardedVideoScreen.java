@@ -4,12 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.actions.ColorAction;
 
 import me.jorge.myfirstgame.MyGame;
-import me.jorge.myfirstgame.util.AssetAdmin;
 import me.jorge.myfirstgame.util.Button;
 import me.jorge.myfirstgame.util.UpgradeButton;
 
@@ -30,14 +27,15 @@ public class RewardedVideoScreen extends ScreenInputProcessor {
 
     private final Color BEIGE_CANVAS = new Color(0.95f,0.7f,0.4f,0.6f);
     private static final float ROUNDNESS_RADIUS = 13, SIDE_BORDER = 18, TOP_BORDER = 180, BLOCK_CIRCLE_RADIUS = 16;
-    private final int rewardCoins;
+    private final int REWARD_QUANTITY, REWARD_TYPE; // 0 to revive, 1 for coins, 2 for hearts
 
     private final String rewardMessage;
 
-    RewardedVideoScreen(final ScreenInputProcessor backScreen, String rewardMessage, final int rewardCoins) {
+    RewardedVideoScreen(final ScreenInputProcessor backScreen, String rewardMessage, final int REWARD_QUANTITY, final int REWARD_TYPE) {
         this.backScreen = backScreen;
 
-        this.rewardCoins = rewardCoins;
+        this.REWARD_QUANTITY = REWARD_QUANTITY;
+        this.REWARD_TYPE = REWARD_TYPE;
 
         textFont = admin.getAsset("coolville15c");
         textFont.setColor(0.1f,0.1f,0.1f,1);
@@ -111,7 +109,7 @@ public class RewardedVideoScreen extends ScreenInputProcessor {
         Gdx.gl.glDisable(GL_BLEND);
 
         batch.begin();
-        textFont.draw(batch, rewardMessage, SIDE_BORDER + 20, GAME_HEIGHT-TOP_BORDER - 8);
+        textFont.draw(batch, rewardMessage, SIDE_BORDER + 20, GAME_HEIGHT-TOP_BORDER - 32);
         if (blockTimer <= 0) {
             backButton.render(batch);
         }
@@ -140,8 +138,12 @@ public class RewardedVideoScreen extends ScreenInputProcessor {
     @Override
     public void onRewarded() {
         backScreen.onRewarded();
-        coins += rewardCoins;
-        UpgradeButton.updateCoins(coins);
+        if (REWARD_TYPE == 1) {
+            coins += REWARD_QUANTITY;
+            UpgradeButton.updateCoins(coins);
+        } else if (REWARD_TYPE == 2) {
+            hearts += REWARD_QUANTITY;
+        }
     }
 
     public void onAdClosed() {

@@ -1,6 +1,7 @@
 package me.jorge.myfirstgame.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -80,14 +81,15 @@ public class MenuScreen extends ScreenInputProcessor {
     //private Button shopButton;
 
     // hearts
-    private float timerDisplacement, testFloat = 0;
-    private final Texture[] heartTextures;
-    private final BitmapFont timerFont;
+    private float timerDisplacement;
+    private final Texture[] HEART_TEXTURES;
+    private final BitmapFont TIMER_FONT;
     private long heartTimer, lastHeartTime;
     private final long HEART_TIMER_MIN = 30, HEART_TIMER = HEART_TIMER_MIN * 60 * 1000;
     private String timerToPrint;
     private int minutesToPrint, secondsToPrint;
-    private final SpriteBatch fontBatch = MyGame.getFontBatch();
+    private final SpriteBatch FONT_BATCH = MyGame.getFontBatch();
+    private final Sound ERROR_SOUND;
 
     MenuScreen(boolean fromLoading)  {
         System.out.println("We are in menuScreen "+ GAME_HEIGHT/2 + " seaY is " + seaY);
@@ -111,7 +113,6 @@ public class MenuScreen extends ScreenInputProcessor {
             admin.saveData("lasthearttime", lastHeartTime);
             admin.flush();
         }
-
         fadeInTime = fromLoading?1.5f:0.3f;
         final int i = fromLoading?1:0;
         fadingColor = new Color(i,i,i,1);
@@ -134,12 +135,13 @@ public class MenuScreen extends ScreenInputProcessor {
         final Texture staringPlayer = admin.getAsset("staring");
         bubble = admin.getAsset("bubble4score");
         player.setTexture(staringPlayer);
-        heartTextures = new Texture[3];
-        heartTextures[0] = admin.getAsset("emptyheart");
-        heartTextures[1] = admin.getAsset("halfheart");
-        heartTextures[2] = admin.getAsset("fullheart");
-        timerFont = admin.getAsset("AcariItalic9");
-        timerFont.setColor(0,0,0,1);
+        HEART_TEXTURES = new Texture[3];
+        HEART_TEXTURES[0] = admin.getAsset("emptyheart");
+        HEART_TEXTURES[1] = admin.getAsset("halfheart");
+        HEART_TEXTURES[2] = admin.getAsset("fullheart");
+        TIMER_FONT = admin.getAsset("AcariItalic9");
+        TIMER_FONT.setColor(fontColor);
+        ERROR_SOUND = admin.getAsset("error sound");
 
         timerDisplacement = Math.max((Math.round(hearts/2.1f))*20, 0);
 
@@ -236,6 +238,7 @@ public class MenuScreen extends ScreenInputProcessor {
         highscoreHidden = false;
         fontS.setColor(fontColor);
         font.setColor(fontColor);
+        TIMER_FONT.setColor(fontColor);
         //This next line checks if the fading color is already transparent, i.e. this is not the first time the menu appears so we are coming from the shop
         if (fadingColor.a > 0.1f) {
             fade.setColor(fadingColor);
@@ -262,6 +265,7 @@ public class MenuScreen extends ScreenInputProcessor {
             final boolean SAVE = hearts < 10 && heartTimer > HEART_TIMER;
             while (hearts < 10 && heartTimer > HEART_TIMER) {
                 lastHeartTime += HEART_TIMER;
+                heartTimer -= HEART_TIMER;
                 hearts++;
                 timerDisplacement = Math.max((Math.round(hearts/2.1f))*20, 0);
             }
@@ -577,6 +581,7 @@ public class MenuScreen extends ScreenInputProcessor {
             font.setColor(fontColor);
             fontS.setColor(fontColor);
             arrow.setAlpha(fontColor.a);
+            TIMER_FONT.setColor(fontColor);
             sea.changeFrontAlpha(0.8f+0.2f*(1-fontColor.a));
             rankingButton.setAlpha(fontColor.a);
             dailyRewardButton.setAlpha(fontColor.a);
@@ -589,6 +594,7 @@ public class MenuScreen extends ScreenInputProcessor {
         if (fontColor.a > 0.1f) {
             fontS.setColor(fontColor);
             font.setColor(fontColor);
+            TIMER_FONT.setColor(fontColor);
             if (!tutotialOn) {
                 font.draw(batch, "Upgrades", GAME_WIDTH / 2 - 57, 50 + arroY);
                 if (!highscoreHidden) fontS.draw(batch, "    Highscore " + highscore +
@@ -596,6 +602,7 @@ public class MenuScreen extends ScreenInputProcessor {
 
             }
             font.draw(batch, "Tap to start!", 50, GAME_HEIGHT / 2 + 52);
+
         }
         if (!tutotialOn) {
             arrow.draw(batch);
@@ -644,24 +651,22 @@ public class MenuScreen extends ScreenInputProcessor {
 
     private void drawHearts() {
 
-        if (state*state > 1) {
-            return;
-        }
-
         batch.begin();
+        batch.setColor(1f, 1f, 1f, fontColor.a);
 
         for (int i = 0; i < 5; i++) {
-            batch.draw(heartTextures[heartIndex(2*i)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34,16,8f*16/10);
+            batch.draw(HEART_TEXTURES[heartIndex(2*i)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34,16,8f*16/10);
         }
 
         for (int i = 0; i < Math.min(Math.round((hearts-10)/2f), 5); i++) {
-            batch.draw(heartTextures[heartIndex(10 + i*2)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34-8f*16/10-8,16,8f*16/10);
+            batch.draw(HEART_TEXTURES[heartIndex(10 + i*2)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34-8f*16/10-8,16,8f*16/10);
         }
 
         for (int i = 0; i < Math.round((hearts-20)/2f); i++) {
-            batch.draw(heartTextures[heartIndex(20 + i*2)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34-2*(8f*16/10+8),16,8f*16/10);
+            batch.draw(HEART_TEXTURES[heartIndex(20 + i*2)],GAME_WIDTH/2 - 48 + i*20,GAME_HEIGHT-34-2*(8f*16/10+8),16,8f*16/10);
         }
 
+        batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
 
         if (hearts < 10) {
@@ -678,8 +683,9 @@ public class MenuScreen extends ScreenInputProcessor {
             }
             minutesToPrint = (int) (HEART_TIMER_MIN-1-TimeUnit.MILLISECONDS.toMinutes(heartTimer));
             secondsToPrint = (int) (60-TimeUnit.MILLISECONDS.toSeconds(heartTimer) + TimeUnit.MINUTES.toSeconds(HEART_TIMER_MIN-1-minutesToPrint));
-            if (secondsToPrint == 0) {
+            if (secondsToPrint == 60) {
                 minutesToPrint++;
+                secondsToPrint = 0;
             }
             if (minutesToPrint < 0) {
                 minutesToPrint = 0;
@@ -687,9 +693,9 @@ public class MenuScreen extends ScreenInputProcessor {
             }
             timerToPrint = "" + (minutesToPrint < 10?0+""+minutesToPrint:minutesToPrint) + ":" +
                     (secondsToPrint<10?0+""+secondsToPrint:secondsToPrint);
-            fontBatch.begin();
-            timerFont.draw(fontBatch, timerToPrint, SCALE_X * (GAME_WIDTH / 2 - 54 + timerDisplacement), SCALE_Y * (GAME_HEIGHT - 38));
-            fontBatch.end();
+            FONT_BATCH.begin();
+            TIMER_FONT.draw(FONT_BATCH, timerToPrint, SCALE_X * (GAME_WIDTH / 2 - 54 + timerDisplacement), SCALE_Y * (GAME_HEIGHT - 38));
+            FONT_BATCH.end();
         }
 
     }
@@ -910,14 +916,20 @@ public class MenuScreen extends ScreenInputProcessor {
     }
 
     void start() {
-        state = 1;
-        fontFade.restart();
-        fontFade.setDuration(0.2f);
-        fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
-        fontFading = true;
-        sea.changeFrontAlpha(1);
-        player.setSeaLevel(0);
-        player.startJump();
+        if (hearts > 0 || tutotialOn) {
+            state = 1;
+            fontFade.restart();
+            fontFade.setDuration(0.2f);
+            fontFade.setEndColor(new Color(fontColor.r, fontColor.g, fontColor.b, 0));
+            fontFading = true;
+            sea.changeFrontAlpha(1);
+            player.setSeaLevel(0);
+            player.startJump();
+        } else {
+            ERROR_SOUND.play();
+            myGame.setScreen(new RewardedVideoScreen(this, "   Play an ad to\n   get hearts!", 2, 2));
+
+        }
     }
 
     void dailyRewardIsAvailable() {

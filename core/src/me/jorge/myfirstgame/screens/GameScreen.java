@@ -585,7 +585,7 @@ public class GameScreen extends ScreenInputProcessor implements SpriteHandlerScr
             if (rightSpawnClock < 0) {
                 rightSpawnClock = triggerSpawn(false) ? TUBE_HEIGHT + SPRITE_MARGIN : CRAB_HEIGHT + SPRITE_MARGIN;
                 if (!fadingOut) {
-                    pointUp(1f * (1 + fasterScoreLevel * 0.25f));
+                    pointUp(1 + fasterScoreLevel * 0.25f);
                 }
             }
             if (missilePwuLevel > 0 && touchJump && longPressOn) {
@@ -1401,8 +1401,8 @@ public class GameScreen extends ScreenInputProcessor implements SpriteHandlerScr
     }
 
     public void finishedFading() {
-        if (!hardcoreOn && !shownVideoAd && adLoaded) {
-            final RewardedVideoScreen rewardedVideoScreen = new RewardedVideoScreen(this, "  Play an ad to\n     revive!", 0);
+        if (!hardcoreOn && !shownVideoAd && adLoaded && (score > 150*difficulty+Math.min(highscore/2,250))) {
+            final RewardedVideoScreen rewardedVideoScreen = new RewardedVideoScreen(this, "  Play an ad to\n     revive!", 0, 0);
             rewardedVideoScreen.setBlockTimer(2.5f);
             myGame.setScreen(rewardedVideoScreen);
             shownVideoAd = true;
@@ -1463,8 +1463,8 @@ public class GameScreen extends ScreenInputProcessor implements SpriteHandlerScr
         admin.flush();
         myGame.anotherGamePlayed(displayScore);
         if (adLoaded && gameCoins > 29 + difficulty*8) {
-            myGame.setScreen(new RewardedVideoScreen(new MenuScreen(false), "You won " + gameCoins +
-                    " coins \nWant to double this?", gameCoins));
+            myGame.setScreen(new RewardedVideoScreen(new MenuScreen(false), "You got " + gameCoins +
+                    " coins. \nWant to double this?", gameCoins, 1));
         } else {
             myGame.setScreen(new MenuScreen(false));
         }
