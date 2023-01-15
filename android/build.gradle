@@ -2,7 +2,7 @@
 
 android {
 
-    compileSdkVersion 29
+    compileSdkVersion 33
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -20,8 +20,8 @@ android {
     }
     defaultConfig {
         applicationId "me.jorge.myfirstgame"
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdkVersion 19
+        targetSdkVersion 33
         versionCode 24
         versionName "4.0"
         multiDexEnabled true
@@ -29,9 +29,8 @@ android {
     }
     dependencies {
         //implementation 'com.google.firebase:firebase-analytics:17.5.0'
-        implementation 'com.google.firebase:firebase-firestore:21.5.0'
+        implementation 'com.google.firebase:firebase-firestore:24.4.1'
         implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
-        natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
@@ -52,7 +51,6 @@ android {
 // so they get packed with the APK.
 task copyAndroidNatives {
     doFirst {
-        file("libs/armeabi/").mkdirs()
         file("libs/armeabi-v7a/").mkdirs()
         file("libs/arm64-v8a/").mkdirs()
         file("libs/x86_64/").mkdirs()
@@ -62,7 +60,6 @@ task copyAndroidNatives {
             def outputDir = null
             if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
             if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
-            if (jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
             if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
             if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
             if (outputDir != null) {

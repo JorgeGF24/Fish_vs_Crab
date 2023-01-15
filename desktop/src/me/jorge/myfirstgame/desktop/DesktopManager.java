@@ -5,17 +5,17 @@ import me.jorge.myfirstgame.util.manager;
 public class DesktopManager implements manager {
 
     @Override
-    public void show() {
-
-    }
-
-    @Override
     public void showRewarded() {
 
     }
 
     @Override
-    public void loadVideoAd() {
+    public void showInterstitial() {
+
+    }
+
+    @Override
+    public void loadRewardAd() {
 
     }
 
@@ -46,6 +46,11 @@ public class DesktopManager implements manager {
 
     @Override
     public void getRankingPosition(int highscore, int hardHighscore) {
+
+    }
+
+    @Override
+    public void loadInterstitialAd() {
 
     }
 

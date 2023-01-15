@@ -6,12 +6,11 @@ buildscript {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-        jcenter()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.2'
-        classpath 'com.google.gms:google-services:4.3.10'
+        classpath 'com.android.tools.build:gradle:7.3.1'
+        classpath 'com.google.gms:google-services:4.3.14'
 
     }
 }
@@ -23,7 +22,7 @@ allprojects {
     ext {
         applicationID = "myfirstgame"
         appName = "Fish vs Crab"
-        gdxVersion = '1.9.10'
+        gdxVersion = '1.11.0'
         roboVMVersion = '2.3.8'
         box2DLightsVersion = '1.4'
         ashleyVersion = '1.7.0'
@@ -33,7 +32,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         google()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
@@ -60,15 +58,13 @@ project(":android") {
 
     dependencies {
         implementation project(":core")
-        implementation 'com.google.firebase:firebase-ads:19.3.0'
+        implementation 'com.google.firebase:firebase-ads:21.4.0'
         api "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
-        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
-        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"

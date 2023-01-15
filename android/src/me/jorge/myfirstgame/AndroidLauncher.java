@@ -1,23 +1,27 @@
 package me.jorge.myfirstgame;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.google.android.gms.ads.AdListener;
+import com.badlogic.gdx.backends.android.AndroidAudio;
+import com.badlogic.gdx.backends.android.AsynchronousAndroidAudio;
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.gms.ads.reward.RewardItem;
-import com.google.android.gms.ads.reward.RewardedVideoAd;
-import com.google.android.gms.ads.reward.RewardedVideoAdListener;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -26,7 +30,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.installations.FirebaseInstallations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,10 +39,10 @@ import java.util.Map;
 import me.jorge.myfirstgame.screens.RankingScreen;
 import me.jorge.myfirstgame.screens.ScreenInputProcessor;
 
-public class AndroidLauncher extends AndroidApplication implements RewardedVideoAdListener {
+public class AndroidLauncher extends AndroidApplication {
 
 	private InterstitialAd mInterstitialAd;
-	private RewardedVideoAd mRewardedVideoAd;
+	private RewardedAd mRewardedAd;
 	private String userID;
 	private FirebaseFirestore firestore;
 
@@ -49,48 +53,74 @@ public class AndroidLauncher extends AndroidApplication implements RewardedVideo
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
+		System.out.println("LAUNCHING");
 		super.onCreate(savedInstanceState);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 		config.useAccelerometer = false;
 		config.useCompass = false;
 		config.useImmersiveMode = true;
 		firestore = FirebaseFirestore.getInstance();
-
 		MobileAds.initialize(this, new OnInitializationCompleteListener() {
 			@Override
-			public void onInitializationComplete(InitializationStatus initializationStatus) {
+			public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
 			}
 		});
 
 		// TEST ca-app-pub-3940256099942544/8691691433
 		// REAL ca-app-pub-8810945539727773/8819793873
 
-		mInterstitialAd = new InterstitialAd(this);
-		mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/8691691433");
-		mInterstitialAd.loadAd(new AdRequest.Builder().build());
-		mInterstitialAd.setAdListener(new AdListener() {
-			@Override
-			public void onAdClosed() {
-				// Load the next interstitial.
-				mInterstitialAd.loadAd(new AdRequest.Builder().build());
-			}
-		});
+		loadInterstitialAd();
+		loadRewardAd();
 
-		mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(this);
-		mRewardedVideoAd.setRewardedVideoAdListener(this);
-
-		loadRewardedVideoAd();
-
-		game = new MyGame(new AndroidManager(mInterstitialAd, mRewardedVideoAd, this));
+		game = new MyGame(new AndroidManager(mInterstitialAd, mRewardedAd, this));
 		initialize(game, config);
 	}
 
 	// TEST ca-app-pub-3940256099942544/5224354917
 	// REAL ca-app-pub-8810945539727773/7982024773
 
-	void loadRewardedVideoAd() {
-		mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
-				new AdRequest.Builder().build());
+	void loadRewardAd() {
+		AdRequest adRequest = new AdRequest.Builder().build();
+		RewardedAd.load(this, "ca-app-pub-3940256099942544/5224354917",
+			adRequest, new RewardedAdLoadCallback() {
+				@Override
+				public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+					// Handle the error.
+					Log.d("AD", loadAdError.toString());
+					loadRewardAd();
+					game.onRewardedVideoFailed();
+					mRewardedAd = null;
+				}
+
+				@Override
+				public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+					mRewardedAd = rewardedAd;
+					ScreenInputProcessor.adLoaded = true;
+					Log.d("AD", "Ad was loaded.");
+				}
+			});
+	}
+
+	void loadInterstitialAd(){
+		AdRequest adRequest = new AdRequest.Builder().build();
+		InterstitialAd.load(this,"ca-app-pub-3940256099942544/5224354917", adRequest,
+			new InterstitialAdLoadCallback() {
+				@Override
+				public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+					// The mInterstitialAd reference will be null until
+					// an ad is loaded.
+					mInterstitialAd = interstitialAd;
+					Log.i("AD", "onAdLoaded");
+				}
+
+				@Override
+				public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+					// Handle the error
+					Log.d("AD", loadAdError.toString());
+					mInterstitialAd = null;
+				}
+			}
+		);
 	}
 
 	public void getTopTen() {
@@ -117,7 +147,7 @@ public class AndroidLauncher extends AndroidApplication implements RewardedVideo
                                 topScores[i] = Math.round(topScoresList.get(i));
                             }
 
-							RankingScreen.topNames = topNames;
+                            RankingScreen.topNames = topNames;
 							RankingScreen.topScores = topScores;
                         }
                     }
@@ -149,16 +179,25 @@ public class AndroidLauncher extends AndroidApplication implements RewardedVideo
 
 	public void setUserName(String userName, int highscore) {
 		if (userID == null) {
-			userID = FirebaseInstanceId.getInstance().getId();
+			FirebaseInstallations.getInstance().getId().addOnCompleteListener( task -> {
+				if (!task.isSuccessful()) {
+					Log.w("firebaseID", "getInstanceId failed", task.getException());
+					return;
+				}
+				// Get new Instance ID
+				userID = task.getResult();
+				setUserName(userName,highscore);
+			});
+		} else {
+
+			Map<String, Object> user = new HashMap<>();
+			user.put("User name", userName);
+			user.put("Highscore", highscore);
+			user.put("HardcoreHighscore", 0);
+
+			firestore.collection("users").document(userID)
+					.set(user, SetOptions.merge());
 		}
-
-		Map<String, Object> user = new HashMap<>();
-		user.put("User name", userName);
-		user.put("Highscore", highscore);
-		user.put("HardcoreHighscore", 0);
-
-		firestore.collection("users").document(userID)
-				.set(user, SetOptions.merge());
 	}
 
 	public void getRankingPosition(int highscore, int hardHighscore) {
@@ -205,54 +244,41 @@ public class AndroidLauncher extends AndroidApplication implements RewardedVideo
 	}
 
 	public void newHigscore(int highscore) {
-		userID = FirebaseInstanceId.getInstance().getId();
-		firestore.collection("users").document(userID).update("Highscore", highscore);
+		if (userID==null) {
+			FirebaseInstallations.getInstance().getId().addOnCompleteListener(task -> {
+				if (!task.isSuccessful()) {
+					Log.w("New highscore", "getInstanceId failed", task.getException());
+					return;
+				}
+				// Get new Instance ID
+				userID = task.getResult();
+				newHigscore(highscore);
+			});
+		} else {
+			firestore.collection("users").document(userID).update("Highscore", highscore);
+		}
 	}
 
 	public void newHardcoreHighscore(int highscore) {
-		userID = FirebaseInstanceId.getInstance().getId();
-		firestore.collection("users").document(userID).update("HardcoreHighscore", highscore);
+		if (userID==null) {
+			FirebaseInstallations.getInstance().getId().addOnCompleteListener(task -> {
+				if (!task.isSuccessful()) {
+					Log.w("HARDCORE highscore", "getInstanceId failed", task.getException());
+					return;
+				}
+				// Get new Instance ID
+				userID = task.getResult();
+			});
+		} else {
+			firestore.collection("users").document(userID).update("HardcoreHighscore", highscore);
+		}
 	}
 
-	@Override
-	public void onRewardedVideoAdLoaded() {
-		ScreenInputProcessor.adLoaded = true;
-	}
-
-	@Override
-	public void onRewardedVideoAdOpened() {
-
-	}
-
-	@Override
-	public void onRewardedVideoStarted() {
-
-	}
-
-	@Override
-	public void onRewardedVideoAdClosed() {
-		ScreenInputProcessor.adLoaded = false;
-		loadRewardedVideoAd();
-		game.onRewardedVideoClosed();
-	}
-
-	@Override
 	public void onRewarded(RewardItem rewardItem) {
 		game.onRewarded();
 	}
 
-	@Override
-	public void onRewardedVideoAdLeftApplication() {
-
-	}
-
-	@Override
-	public void onRewardedVideoAdFailedToLoad(int i) {
-		game.onRewardedVideoFailed();
-	}
-
-	@Override
-	public void onRewardedVideoCompleted() {
-
+	public MyGame getGame() {
+		return game;
 	}
 }

@@ -8,7 +8,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-import java.lang.reflect.Array;
 import java.util.Calendar;
 
 import me.jorge.myfirstgame.screens.LoadingScreen;
@@ -18,7 +17,6 @@ import me.jorge.myfirstgame.screens.ScreenInputProcessor;
 import me.jorge.myfirstgame.util.manager;
 import me.jorge.myfirstgame.util.AssetAdmin;
 import me.jorge.myfirstgame.util.InputHandler;
-import me.jorge.myfirstgame.util.RankingManager;
 
 public class MyGame extends Game {
 
@@ -104,10 +102,10 @@ public class MyGame extends Game {
 		sessionGamesPlayed++;
 		sessionTotalScore += score;
 		if (sessionGamesPlayed%3 == 0) {
-			manager.show();
+			manager.showInterstitial();
 			sessionTotalScore = 0;
-		} else if (sessionTotalScore > 1600) {
-            manager.show();
+		} else if (sessionTotalScore > 1000) {
+            manager.showInterstitial();
 		    sessionTotalScore = 0;
         }
 	}
@@ -121,7 +119,7 @@ public class MyGame extends Game {
 	}
 
 	public void loadVideoAd() {
-		manager.loadVideoAd();
+		manager.loadRewardAd();
 	}
 
 	public void onRewardedVideoClosed() {

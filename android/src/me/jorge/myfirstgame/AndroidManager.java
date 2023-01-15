@@ -4,20 +4,28 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.provider.Settings;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
-import com.google.android.gms.ads.reward.RewardedVideoAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.OnUserEarnedRewardListener;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
 
+import me.jorge.myfirstgame.screens.ScreenInputProcessor;
 import me.jorge.myfirstgame.util.manager;
 
 public class AndroidManager implements manager {
 
     private final AndroidLauncher launcher;
 
-    public AndroidManager(InterstitialAd ad, RewardedVideoAd rewardAd, AndroidLauncher launcher) {
+    public AndroidManager(InterstitialAd interstitialAd, RewardedAd rewardAd, AndroidLauncher launcher) {
         this.launcher = launcher;
-        this.ad = ad;
+        this.interstitialAd = interstitialAd;
         this.rewardAd = rewardAd;
         this.activity = launcher;
 
@@ -53,59 +61,133 @@ public class AndroidManager implements manager {
         launcher.getRankingPosition(highscore, hardHighscore);
     }
 
-    private final InterstitialAd ad;
-    private final RewardedVideoAd rewardAd;
+    private InterstitialAd interstitialAd;
+    private RewardedAd rewardAd;
     private final Activity activity;
     private final Context context;
 
     @Override
-    public void show() {
-        System.out.println("Show ad");
-        activity.runOnUiThread(new Runnable() {
-            public void run() {
-                if (ad.isLoaded()) {
-                    ad.show();
-                } else {
-                    ad.loadAd(new AdRequest.Builder().build());
-                    //Log.d(TAG, "Interstitial ad is not loaded yet");
-                }
-            }
-        });
-    }
-
-    @Override
     public void showRewarded() {
+        activity.runOnUiThread(() -> {
+            if (rewardAd != null) {
 
-        activity.runOnUiThread(new Runnable() {
-            public void run() {
-                if (rewardAd.isLoaded()) {
-                    rewardAd.show();
-                } else {
-                    ((AndroidLauncher) activity).loadRewardedVideoAd();
-                    //Log.d(TAG, "Interstitial ad is not loaded yet");
-                }
+                rewardAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                    @Override
+                    public void onAdClicked() {
+                        // Called when a click is recorded for an ad.
+                        Log.d("AD", "Ad was clicked.");
+                    }
+
+                    @Override
+                    public void onAdDismissedFullScreenContent() {
+                        // Called when ad is dismissed.
+                        // Set the ad reference to null so you don't show the ad a second time.
+                        Log.d("AD", "Ad dismissed fullscreen content.");
+                        rewardAd = null;
+
+                        ScreenInputProcessor.adLoaded = false;
+                        loadRewardAd();
+                        launcher.getGame().onRewardedVideoClosed();
+                    }
+
+                    @Override
+                    public void onAdFailedToShowFullScreenContent(AdError adError) {
+                        // Called when ad fails to show.
+                        Log.e("AD", "Ad failed to show fullscreen content.");
+                        rewardAd = null;
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        // Called when an impression is recorded for an ad.
+                        Log.d("AD", "Ad recorded an impression.");
+                    }
+
+                    @Override
+                    public void onAdShowedFullScreenContent() {
+                        // Called when ad is shown.
+                        Log.d("AD", "Ad showed fullscreen content.");
+                    }
+                });
+                rewardAd.show(launcher, rewardItem -> {
+                    // Handle the reward.
+                    Log.d("AD", "The user earned the reward.");
+                    launcher.onRewarded(rewardItem);
+                });
+            } else {
+                loadRewardAd();
+                Log.d("AD", "The rewarded ad wasn't ready yet.");
             }
         });
     }
 
     @Override
-    public void loadVideoAd() {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!rewardAd.isLoaded()) {
-                    ((AndroidLauncher) activity).loadRewardedVideoAd();
-                }
+    public void showInterstitial() {
+        activity.runOnUiThread(() -> {
+            if (interstitialAd != null) {
+                interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
+                    @Override
+                    public void onAdClicked() {
+                        // Called when a click is recorded for an ad.
+                        //Log.d(TAG, "Ad was clicked.");
+                    }
+
+                    @Override
+                    public void onAdDismissedFullScreenContent() {
+                        // Called when ad is dismissed.
+                        // Set the ad reference to null so you don't show the ad a second time.
+                        //Log.d(TAG, "Ad dismissed fullscreen content.");
+                        interstitialAd = null;
+                    }
+
+                    @Override
+                    public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
+                        // Called when ad fails to show.
+                        //Log.e(TAG, "Ad failed to show fullscreen content.");
+                        interstitialAd = null;
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        // Called when an impression is recorded for an ad.
+                        //Log.d(TAG, "Ad recorded an impression.");
+                    }
+
+                    @Override
+                    public void onAdShowedFullScreenContent() {
+                        // Called when ad is shown.
+                        //Log.d(TAG, "Ad showed fullscreen content.");
+                    }
+                });
+
+                interstitialAd.show(launcher);
+            } else {
+                loadInterstitialAd();
+                Log.d("AD", "The interstitial ad wasn't ready yet.");
+            }
+        });
+    }
+
+    @Override
+    public void loadRewardAd() {
+        activity.runOnUiThread(() -> {
+            if (rewardAd == null) {
+                ((AndroidLauncher) activity).loadRewardAd();
+            }
+        });
+    }
+
+    @Override
+    public void loadInterstitialAd() {
+        activity.runOnUiThread(() -> {
+            if (interstitialAd == null) {
+                ((AndroidLauncher) activity).loadInterstitialAd();
             }
         });
     }
 
     @Override
     public boolean isTimeAutomatic() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            return (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME, 0)) == 1 && (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1);
-        } else {
-            return (android.provider.Settings.System.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1) && (android.provider.Settings.System.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1);
-        }
+        return (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME, 0)) == 1 && (Settings.Global.getInt(context.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1);
     }
 }
