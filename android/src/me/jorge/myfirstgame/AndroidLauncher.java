@@ -1,5 +1,6 @@
 package me.jorge.myfirstgame;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
@@ -74,6 +75,11 @@ public class AndroidLauncher extends AndroidApplication {
 
 		game = new MyGame(new AndroidManager(mInterstitialAd, mRewardedAd, this));
 		initialize(game, config);
+	}
+
+	@Override
+	public AndroidAudio createAudio(Context context, AndroidApplicationConfiguration config) {
+		return new AsynchronousAndroidAudio(context, config);
 	}
 
 	// TEST ca-app-pub-3940256099942544/5224354917
@@ -156,7 +162,8 @@ public class AndroidLauncher extends AndroidApplication {
                 .orderBy("HardcoreHighscore", Query.Direction.DESCENDING).limit(10)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
+                    @SuppressLint("SuspiciousIndentation")
+					@Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.getResult().size() == 10) {
                             hardTopNames = new String[10];
