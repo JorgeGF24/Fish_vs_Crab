@@ -1,5 +1,8 @@
 # Welcome
 
+NOTE: THERE IS NO COMMIT HISTORY Because: This was my first personal BIG project, and I did not yet know how to use version control (I was a self taught programmer, git was somehow not in my custom curriculum).
+
+
 This is my codebase for my game Fish vs Crab, no longer on the playstore sadly. This is what it looked like:
 
 It had hand-drawn pixel art, a live leaderboard implemented in FireBase, an upgrade system, where you could evolve your Fish, different enemies, powerups, ads with Google Ad mobs (Sorry) ....
